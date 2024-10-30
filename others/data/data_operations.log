@@ -1,0 +1,37 @@
+2024-10-25 09:14:29,156 - INFO - Saved data to cloud_storage\health_records.json
+2024-10-25 09:14:29,157 - INFO - Saved data to cloud_storage\feedback.json
+2024-10-25 09:14:29,159 - INFO - Saved data to cloud_storage\user_data.json
+2024-10-25 09:14:29,198 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:17:52,351 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:17:53,393 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:20:28,596 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:20:29,480 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:24:57,263 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:28:41,149 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:42:37,020 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:43:53,767 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:43:59,271 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:04,008 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:04,068 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:06,183 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:06,246 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:08,194 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:08,276 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:08,413 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:08,477 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:11,329 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:11,375 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:29,255 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:29,308 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:44:30,139 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 09:44:30,201 - ERROR - Error syncing health record: 'exercise'
+2024-10-25 09:52:50,527 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 18:41:00,645 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 18:58:21,610 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:02:32,026 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:05:46,703 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:10:05,099 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:13:25,896 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:15:57,029 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:17:45,142 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
+2024-10-25 19:21:42,067 - ERROR - Error getting dashboard data: object list can't be used in 'await' expression
