@@ -1,2 +1,14 @@
-# Auto detect text files and perform LF normalization
-* text=auto
+# Environment Variables
+.env
+.env.local
+.env.*
+!.env.example
+
+# IDE files (可选)
+.idea/
+.vscode/
+
+# 其他常见需要忽略的文件
+node_modules/
+__pycache__/
+*.pyc
