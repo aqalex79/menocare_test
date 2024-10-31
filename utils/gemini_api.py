@@ -4,21 +4,40 @@ import google.generativeai as genai
 from typing import Dict, Any, List
 import json
 from datetime import datetime
+import asyncio
+import logging
 
-# Load environment variables at startup
-load_dotenv()
+# 添加日志配置
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
+
 
 class GeminiAPI:
    def __init__(self):
-       api_key = os.getenv("GOOGLE_API_KEY")
-       if not api_key:
-           raise ValueError("GOOGLE_API_KEY not found in environment variables")
+        # 保持原有初始化不变
+        load_dotenv()
+        api_key = os.getenv("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY not found in environment variables")
            
-       genai.configure(api_key=api_key)
-       self.model = genai.GenerativeModel('gemini-1.5-pro')
+        genai.configure(api_key=api_key)
+        self.model = genai.GenerativeModel('gemini-1.5-pro')
+
+        # 只添加简单缓存
+        self._cache = {}
+        self.cache_ttl = 300  # 5分钟缓存
        
    async def analyze_dashboard_data(self, data: Dict[str, Any], period: str = 'week') -> Dict[str, Any]:
+        """分析仪表板数据"""
         try:
+            # 添加缓存检查
+            cache_key = f"dashboard_{period}_{hash(str(data))}"
+            if cache_key in self._cache:
+                cached_data, timestamp = self._cache[cache_key]
+                if (datetime.now() - timestamp).seconds < self.cache_ttl:
+                    logger.info("Using cached dashboard data")
+                    return cached_data
+            
             current_data = data.get('current_data', {})
             historical_data = data.get('historical_data', [])
             metrics = data.get('metrics', {})
@@ -117,21 +136,19 @@ class GeminiAPI:
                     text = text.rsplit('```', 1)[0]
                 text = text.strip()
                 
-                # Clean text
-                text = text.replace(".  ", ". ")
-                text = text.replace("...", ".")   
-                text = text.replace(". ", ".")    
-                text = text.replace(",  ", ", ")  
+                result = json.loads(text)
                 
-                return json.loads(text)
+                # 保存到缓存
+                self._cache[cache_key] = (result, datetime.now())
+                
+                return result
                 
             except json.JSONDecodeError as je:
-                print("JSON Parse Error:", str(je))
-                print("Attempted to parse text:", text) 
+                logger.error(f"JSON Parse Error: {str(je)}")
                 return self._get_default_dashboard_response(period)
                 
         except Exception as e:
-            print(f"API Error: {str(e)}")
+            logger.error(f"API Error: {str(e)}")
             return self._get_default_dashboard_response(period)
 
    def _get_default_dashboard_response(self, period: str) -> Dict[str, Any]:
@@ -199,6 +216,15 @@ class GeminiAPI:
 
    async def analyze_daily_input(self, data: Dict[str, Any]) -> Dict[str, Any]:
        try:
+           # 添加缓存检查
+           cache_key = f"daily_{data.get('module_type', '')}_{hash(str(data))}"
+           if cache_key in self._cache:
+               cached_data, timestamp = self._cache[cache_key]
+               if (datetime.now() - timestamp).seconds < self.cache_ttl:
+                   logger.info("Using cached daily input data")
+                   return cached_data
+
+            # 保持原有的所有处理逻辑不变
            module_type = data.get('module_type', '').lower()
            current_data = data.get('current_data', {})
            historical_data = data.get('historical_data', [])[-7:]
@@ -285,6 +311,10 @@ class GeminiAPI:
                    analysis['today_insights'] = []
                if not isinstance(analysis.get('recommendations'), list):
                    analysis['recommendations'] = []
+                
+               # 保存到缓存
+               self._cache[cache_key] = (analysis, datetime.now())
+                
                return analysis
            
            except json.JSONDecodeError:
