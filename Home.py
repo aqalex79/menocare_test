@@ -22,7 +22,7 @@ def render_user_info():
     """Display user information in sidebar"""
     try:
         user = st.session_state.user_data
-        st.sidebar.image("https://api.dicebear.com/7.x/micah/svg?seed=Jane&mood=happy&smile=true", width=150)
+        st.sidebar.image("https://api.dicebear.com/7.x/big-ears/svg?seed=Jane&mood=happy", width=150)
         st.sidebar.title(f"👋 Welcome, {user['name']}")
         st.sidebar.markdown(f"""
         #### Personal Information

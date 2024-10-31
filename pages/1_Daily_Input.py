@@ -28,7 +28,7 @@ data_store.initialize_session_state()
 def render_user_info():
     """Display user information in sidebar"""
     user = st.session_state.user_data
-    st.sidebar.image("https://api.dicebear.com/7.x/micah/svg?seed=Jane&mood=happy&smile=true", width=150)
+    st.sidebar.image("https://api.dicebear.com/7.x/big-ears/svg?seed=Jane&mood=happy", width=150)
     st.sidebar.title(f"👋 Welcome, {user['name']}")
     st.sidebar.markdown(f"""
     #### Personal Information
@@ -42,6 +42,7 @@ async def process_module_submission(module_type: str, current_data: dict, contai
     try:
         # Save data
         data_store.add_health_record(current_data)
+        container.empty()  # 清空容器，包括表单和按钮
         
         # Show success message in the container
         message = f"{meal_type} data" if meal_type else f"{module_type.capitalize()} data"
@@ -307,24 +308,25 @@ def diet_module():
                     key=f"supplements_{meal_name}"
                 )
                 
-            # 创建本餐食的分析结果容器
+            # 修改表单部分
             meal_container = st.container()
-            with st.form(key=f"diet_form_{meal_name.lower()}"):
-                submit_meal = st.form_submit_button(
-                    f"Save {meal_name} Record",
-                    type="primary",
-                    use_container_width=True
-                )
-                if submit_meal:
-                    meal_container.empty()
-                    current_data = collect_form_data(meal_name)
-                    asyncio.run(process_module_submission(
-                        "Diet",
-                        current_data,
-                        meal_container,
-                        meal_name
-                    ))
-                    st.session_state.user_data['last_update'] = datetime.now().strftime("%Y-%m-%d")
+            with meal_container:  # 把form放在container里面
+                with st.form(key=f"diet_form_{meal_name.lower()}"):
+                    submit_meal = st.form_submit_button(
+                        f"Save {meal_name} Record",
+                        type="primary",
+                        use_container_width=True
+                    )
+                    if submit_meal:
+                        meal_container.empty()
+                        current_data = collect_form_data(meal_name)
+                        asyncio.run(process_module_submission(
+                            "Diet",
+                            current_data,
+                            meal_container,
+                            meal_name
+                        ))
+                        st.session_state.user_data['last_update'] = datetime.now().strftime("%Y-%m-%d")
 
 def collect_form_data(current_meal: str = None) -> dict:
     """Collect form data in a structured format"""
@@ -395,53 +397,50 @@ def main():
     # Mood tab
     with tab1:
         mood_module()
-        # Create container for mood results
         mood_container = st.container()
-        with st.form(key="mood_form"):
-            submit_mood = st.form_submit_button(
-                "Save Mood Record",
-                type="primary",
-                use_container_width=True
-            )
-            if submit_mood:
-                # Clear previous results by creating a new container
-                mood_container.empty()
-                current_data = collect_form_data()
-                asyncio.run(process_module_submission("Mood", current_data, mood_container))
-    
+        with mood_container:  # 把form放在container里面
+            with st.form(key="mood_form"):
+                submit_mood = st.form_submit_button(
+                    "Save Mood Record",
+                    type="primary",
+                    use_container_width=True
+                )
+                if submit_mood:
+                    mood_container.empty()
+                    current_data = collect_form_data()
+                    asyncio.run(process_module_submission("Mood", current_data, mood_container))
+
     # Sleep tab
     with tab2:
         sleep_module()
-        # Create container for sleep results
         sleep_container = st.container()
-        with st.form(key="sleep_form"):
-            submit_sleep = st.form_submit_button(
-                "Save Sleep Record",
-                type="primary",
-                use_container_width=True
-            )
-            if submit_sleep:
-                # Clear previous results by creating a new container
-                sleep_container.empty()
-                current_data = collect_form_data()
-                asyncio.run(process_module_submission("Sleep", current_data, sleep_container))
-    
+        with sleep_container:  # 把form放在container里面
+            with st.form(key="sleep_form"):
+                submit_sleep = st.form_submit_button(
+                    "Save Sleep Record",
+                    type="primary",
+                    use_container_width=True
+                )
+                if submit_sleep:
+                    sleep_container.empty()
+                    current_data = collect_form_data()
+                    asyncio.run(process_module_submission("Sleep", current_data, sleep_container))
+
     # Symptoms tab
     with tab3:
         symptoms_module()
-        # Create container for symptoms results
         symptoms_container = st.container()
-        with st.form(key="symptoms_form"):
-            submit_symptoms = st.form_submit_button(
-                "Save Symptoms Record",
-                type="primary",
-                use_container_width=True
-            )
-            if submit_symptoms:
-                # Clear previous results by creating a new container
-                symptoms_container.empty()
-                current_data = collect_form_data()
-                asyncio.run(process_module_submission("Symptoms", current_data, symptoms_container))
+        with symptoms_container:  # 把form放在container里面
+            with st.form(key="symptoms_form"):
+                submit_symptoms = st.form_submit_button(
+                    "Save Symptoms Record",
+                    type="primary",
+                    use_container_width=True
+                )
+                if submit_symptoms:
+                    symptoms_container.empty()
+                    current_data = collect_form_data()
+                    asyncio.run(process_module_submission("Symptoms", current_data, symptoms_container))
         # Diet tab
     with tab4:
         diet_module()
