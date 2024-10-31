@@ -37,39 +37,58 @@ def render_user_info():
     - 🕒 Last Updated: {user['last_update']}
     """)
 
-async def process_module_submission(module_type: str, current_data: dict, container):
+async def process_module_submission(module_type: str, current_data: dict, container, meal_type: str = None):
     """Process module data submission and analysis"""
     try:
         # Save data
         data_store.add_health_record(current_data)
         
         # Show success message in the container
-        container.success(f"{module_type.capitalize()} data saved successfully!")
+        message = f"{meal_type} data" if meal_type else f"{module_type.capitalize()} data"
+        container.success(f"{message} saved successfully!")
         container.balloons()
         
         # Get historical data for analysis
         historical_data = data_store.get_recent_records()
         
         # Prepare module-specific data
-        module_data = {
-            "current_data": current_data[module_type.lower()],
-            "historical_data": [record[module_type.lower()] for record in historical_data],
-            "module_type": module_type.lower()
-        }
+        if module_type.lower() == "diet" and meal_type:
+            # 安全地获取历史数据
+            historical_meals = []
+            for record in historical_data:
+                try:
+                    if "diet" in record and "meals" in record["diet"]:
+                        meal_data = record["diet"]["meals"].get(meal_type.lower(), {})
+                        historical_meals.append(meal_data)
+                except Exception:
+                    continue
+                    
+            module_data = {
+                "current_data": current_data["diet"]["meals"][meal_type.lower()],
+                "historical_data": historical_meals,
+                "module_type": module_type.lower(),
+                "meal_type": meal_type.lower()
+            }
+        else:
+            module_data = {
+                "current_data": current_data[module_type.lower()],
+                "historical_data": [record[module_type.lower()] for record in historical_data if module_type.lower() in record],
+                "module_type": module_type.lower()
+            }
         
         # Generate and show analysis
-        with st.spinner(f'Analyzing your {module_type.lower()} data...'):
+        with st.spinner(f'Analyzing your {message.lower()}...'):
             analysis = await gemini_api.analyze_daily_input(module_data)
             
             if analysis:
                 # Show analysis results
                 if analysis.get("today_insights"):
-                    container.subheader(f"🔍 Today's {module_type} Analysis")
+                    container.subheader(f"🔍 Today's {meal_type if meal_type else module_type} Analysis")
                     for insight in analysis["today_insights"]:
                         container.info(insight)
                 
                 if analysis.get("recommendations"):
-                    container.subheader(f"💡 {module_type} Recommendations")
+                    container.subheader(f"💡 {meal_type if meal_type else module_type} Recommendations")
                     for rec in analysis["recommendations"]:
                         container.success(rec)
             else:
@@ -225,7 +244,6 @@ def diet_module():
     """Diet tracking module"""
     st.header("🍽️ Diet Module")
     
-    # Create tabs for each meal
     meal_tabs = st.tabs(["Breakfast", "Lunch", "Dinner", "Snacks"])
     
     for i, meal_tab in enumerate(meal_tabs):
@@ -233,8 +251,8 @@ def diet_module():
             meal_name = ["Breakfast", "Lunch", "Dinner", "Snacks"][i]
             st.subheader(f"{meal_name} Details")
             
+            # Meal specific information
             col1, col2 = st.columns(2)
-            
             with col1:
                 st.multiselect(
                     "Food Categories",
@@ -251,53 +269,66 @@ def diet_module():
                     ],
                     key=f"food_cat_{meal_name}"
                 )
-            
-            with col2:
+                
                 st.text_area(
                     "Meal Notes",
                     placeholder=f"Describe your {meal_name.lower()}...",
                     key=f"meal_notes_{meal_name}"
                 )
-    
-    # Additional dietary information
-    st.subheader("General Dietary Information")
-    col1, col2 = st.columns(2)
-    
-    with col1:
-        st.number_input(
-            "Water intake (glasses)",
-            min_value=0,
-            max_value=20,
-            value=6,
-            key="water_intake"
-        )
-        
-        st.number_input(
-            "Caffeine intake (cups)",
-            min_value=0,
-            max_value=10,
-            value=2,
-            key="caffeine_intake"
-        )
-    
-    with col2:
-        st.multiselect(
-            "Supplements taken today",
-            options=[
-                "Calcium",
-                "Vitamin D",
-                "Magnesium",
-                "Fish Oil",
-                "Multivitamin",
-                "Iron",
-                "Other"
-            ],
-            key="supplements"
-        )
+            
+            with col2:
+                st.number_input(
+                    "Water intake (glasses)",
+                    min_value=0,
+                    max_value=20,
+                    value=6,
+                    key=f"water_intake_{meal_name}"
+                )
+                
+                st.number_input(
+                    "Caffeine intake (cups)",
+                    min_value=0,
+                    max_value=10,
+                    value=2,
+                    key=f"caffeine_intake_{meal_name}"
+                )
+                
+                st.multiselect(
+                    "Supplements taken",
+                    options=[
+                        "Calcium",
+                        "Vitamin D",
+                        "Magnesium",
+                        "Fish Oil",
+                        "Multivitamin",
+                        "Iron",
+                        "Other"
+                    ],
+                    key=f"supplements_{meal_name}"
+                )
+                
+            # 创建本餐食的分析结果容器
+            meal_container = st.container()
+            with st.form(key=f"diet_form_{meal_name.lower()}"):
+                submit_meal = st.form_submit_button(
+                    f"Save {meal_name} Record",
+                    type="primary",
+                    use_container_width=True
+                )
+                if submit_meal:
+                    meal_container.empty()
+                    current_data = collect_form_data(meal_name)
+                    asyncio.run(process_module_submission(
+                        "Diet",
+                        current_data,
+                        meal_container,
+                        meal_name
+                    ))
+                    st.session_state.user_data['last_update'] = datetime.now().strftime("%Y-%m-%d")
 
-def collect_form_data() -> dict:
+def collect_form_data(current_meal: str = None) -> dict:
     """Collect form data in a structured format"""
-    return {
+    data = {
         "date": datetime.now().strftime("%Y-%m-%d"),
         "mood": {
             "score": st.session_state.get("mood_score", 7),
@@ -310,29 +341,6 @@ def collect_form_data() -> dict:
             "quality": st.session_state.get("sleep_quality", 7),
             "issues": st.session_state.get("sleep_issues", []),
             "wake_frequency": st.session_state.get("wake_frequency", 0)
-        },
-        "diet": {
-            "meals": {
-                "breakfast": {
-                    "categories": st.session_state.get("food_cat_Breakfast", []),
-                    "notes": st.session_state.get("meal_notes_Breakfast", "")
-                },
-                "lunch": {
-                    "categories": st.session_state.get("food_cat_Lunch", []),
-                    "notes": st.session_state.get("meal_notes_Lunch", "")
-                },
-                "dinner": {
-                    "categories": st.session_state.get("food_cat_Dinner", []),
-                    "notes": st.session_state.get("meal_notes_Dinner", "")
-                },
-                "snacks": {
-                    "categories": st.session_state.get("food_cat_Snacks", []),
-                    "notes": st.session_state.get("meal_notes_Snacks", "")
-                }
-            },
-            "water_intake": st.session_state.get("water_intake", 6),
-            "caffeine_intake": st.session_state.get("caffeine_intake", 2),
-            "supplements": st.session_state.get("supplements", [])
         },
         "symptoms": {
             "physical": {
@@ -350,6 +358,22 @@ def collect_form_data() -> dict:
             "notes": st.session_state.get("other_symptoms", "")
         }
     }
+    
+    # Add diet data only if current_meal is provided
+    if current_meal:
+        data["diet"] = {
+            "meals": {
+                current_meal.lower(): {
+                    "categories": st.session_state.get(f"food_cat_{current_meal}", []),
+                    "notes": st.session_state.get(f"meal_notes_{current_meal}", "")
+                }
+            },
+            "water_intake": st.session_state.get(f"water_intake_{current_meal}", 6),
+            "caffeine_intake": st.session_state.get(f"caffeine_intake_{current_meal}", 2),
+            "supplements": st.session_state.get(f"supplements_{current_meal}", [])
+        }
+    
+    return data
 
 def main():
     render_user_info()
@@ -418,27 +442,9 @@ def main():
                 symptoms_container.empty()
                 current_data = collect_form_data()
                 asyncio.run(process_module_submission("Symptoms", current_data, symptoms_container))
-    
-    # Diet tab
+        # Diet tab
     with tab4:
         diet_module()
-        # Create container for diet results
-        diet_container = st.container()
-        with st.form(key="diet_form"):
-            submit_diet = st.form_submit_button(
-                "Save Diet Record",
-                type="primary",
-                use_container_width=True
-            )
-            if submit_diet:
-                # Clear previous results by creating a new container
-                diet_container.empty()
-                current_data = collect_form_data()
-                asyncio.run(process_module_submission("Diet", current_data, diet_container))
-
-    # Update last update time if any form was submitted
-    if submit_mood or submit_sleep or submit_symptoms or submit_diet:
-        st.session_state.user_data['last_update'] = datetime.now().strftime("%Y-%m-%d")
-
+    
 if __name__ == "__main__":
     main()
